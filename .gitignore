@@ -1,0 +1,32 @@
+# リソースパックビルド用の一時ファイル
+*.zip
+*.log
+*.tmp
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ固有ファイル
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node.js（もし使う場合）
+node_modules/
+package-lock.json
+
+# Python（もし使う場合）
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.env
+
+# リソースパック作業ディレクトリの一時ファイル
+resourcepack/
+
+*.bat
