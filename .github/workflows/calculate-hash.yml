@@ -1,0 +1,106 @@
+name: Calculate Resource Pack Hash
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  calculate-hash:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get release information
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # リリースのタグ名を取得
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+          # リリース日を取得（UTC）
+          RELEASE_DATE=$(date -u +%Y-%m-%d)
+          echo "release_date=$RELEASE_DATE" >> $GITHUB_OUTPUT
+
+          # リリースに添付されたzipファイルのURLを取得
+          ASSET_URL=$(gh api repos/${{ github.repository }}/releases/tags/$TAG_NAME \
+            --jq '.assets[] | select(.name | endswith(".zip")) | .browser_download_url' | head -n 1)
+
+          if [ -z "$ASSET_URL" ]; then
+            echo "Error: No .zip file found in release assets"
+            exit 1
+          fi
+
+          echo "asset_url=$ASSET_URL" >> $GITHUB_OUTPUT
+          echo "Found asset: $ASSET_URL"
+
+      - name: Download resource pack
+        run: |
+          curl -L -o resourcepack.zip "${{ steps.release.outputs.asset_url }}"
+          echo "Downloaded resource pack"
+
+      - name: Calculate SHA-1 hash
+        id: hash
+        run: |
+          HASH=$(sha1sum resourcepack.zip | awk '{print $1}')
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "Calculated SHA-1: $HASH"
+
+      - name: Save hash to file
+        run: |
+          mkdir -p hashes
+          echo "${{ steps.hash.outputs.hash }}" > hashes/${{ steps.release.outputs.release_date }}.txt
+          echo "Saved hash to hashes/${{ steps.release.outputs.release_date }}.txt"
+
+      - name: Commit and push hash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add hashes/
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add SHA-1 hash for release ${{ steps.release.outputs.tag_name }} (${{ steps.release.outputs.release_date }})"
+            git push origin HEAD:main
+            echo "Pushed hash to repository"
+          fi
+
+      - name: Update release description with hash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HASH="${{ steps.hash.outputs.hash }}"
+          CURRENT_BODY="${{ github.event.release.body }}"
+
+          # ハッシュ情報を追加
+          NEW_BODY="$CURRENT_BODY
+
+---
+
+**Resource Pack SHA-1 Hash:**
+\`\`\`
+$HASH
+\`\`\`
+
+Use this hash in your server's \`config.yml\`:
+\`\`\`yaml
+resource-pack:
+  sha1: \"$HASH\"
+\`\`\`"
+
+          # リリースの説明を更新
+          gh api repos/${{ github.repository }}/releases/${{ github.event.release.id }} \
+            -X PATCH \
+            -f body="$NEW_BODY"
+
+          echo "Updated release description with hash"
