@@ -75,32 +75,9 @@ jobs:
             echo "Pushed hash to repository"
           fi
 
-      - name: Update release description with hash
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Display hash
         run: |
-          HASH="${{ steps.hash.outputs.hash }}"
-          CURRENT_BODY="${{ github.event.release.body }}"
-
-          # ハッシュ情報を追加
-          NEW_BODY="$CURRENT_BODY
-
----
-
-**Resource Pack SHA-1 Hash:**
-\`\`\`
-$HASH
-\`\`\`
-
-Use this hash in your server's \`config.yml\`:
-\`\`\`yaml
-resource-pack:
-  sha1: \"$HASH\"
-\`\`\`"
-
-          # リリースの説明を更新
-          gh api repos/${{ github.repository }}/releases/${{ github.event.release.id }} \
-            -X PATCH \
-            -f body="$NEW_BODY"
-
-          echo "Updated release description with hash"
+          echo "========================================="
+          echo "SHA-1 Hash: ${{ steps.hash.outputs.hash }}"
+          echo "Saved to: hashes/${{ steps.release.outputs.release_date }}.txt"
+          echo "========================================="
