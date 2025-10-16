@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "minecraft": "1.20.4",
+  "forge": "49.2.0",
+  "mods": [
+    {
+      "name": "Optifine",
+      "fileName": "OptiFine_1.20.4_HD_U_I7.jar",
+      "version": "1.0.0",
+      "modId": "optifine",
+      "required": true,
+      "url": "https://optifine.net/downloadx?f=OptiFine_1.20.4_HD_U_I7.jar&x=bbed7b652be6efb6c571bee5874dcf0a",
+      "description": "Optifineだよ"
+    }
+  ]
+}
