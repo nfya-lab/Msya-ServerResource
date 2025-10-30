@@ -1,6 +1,12 @@
 {
   "terms": {
-    "version": "0.1",
-    "date": "2025-10-13"
+    "server": {
+      "version": "1.0",
+      "date": "2025-10-30"
+    },
+    "client": {
+      "version": "0.1",
+      "date": "2025-10-30"
+    }
   }
 }
